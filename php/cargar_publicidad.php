@@ -1,141 +1,122 @@
-<?php 
-    include "conexion.php";
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subir publicidad</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
-    <link rel="stylesheet" href="css/style.css?x=0">
-    <link href="css/bootstrap-datetimepicker.min.css" rel="stylesheet">
-    <script src="js/bootstrap-datetimepicker.min.js"></script>
-    <!-- <link rel="stylesheet" href="bootstrap/css/bootstrap.css">
-    <link rel="stylesheet" href="bootstrap/js/popper.min.js">
-    <link rel="stylesheet" href="bootstrap/js/bootstrap.bundle.min.js">
-    <link rel="stylesheet" href="bootstrap/js/bootstrap.bundle.js"> -->
-    <script src="js/jquery-3.6.0.min.js"></script>
-</head>
-<body>
+<?php
 
+//TODO SIRVE CORRECTAMENTE , SE REVISO EL (21-06-2021)
+if(isset($_POST['crear'])){
+include '../conexion.php';
+    function validate($data){
+        $data = trim($data);
+        $data = stripslashes($data);
+        $data = htmlspecialchars($data);
+        return $data;
+    }
+}
 
+$titulo = $_POST['titulo_publicidad'];
+$texto = $_POST['texto'];
+$fecha_hora_inicio = $_POST['fecha_hora_inicio'];
+$fecha_hora_final = $_POST['fecha_hora_final'];
+$fk_sucursal = $_POST['fk_sucursal'];
+$fk_dispositivo = $_POST['fk_dispositivo'];
+$archivo = $_FILES['archivo']['name'];
+$tipo = $_FILES['archivo']['type'];
+$archivo_tamano = $_FILES['archivo']['size'];
 
-        <div class="container">
-        
-            <form action="php/cargar_publicidad.php" method="post" enctype="multipart/form-data">
-                <div class="form-group">
-                    <a href="index.php">Inicio</a>
-                </div>
-                <!-- <div class="link-right">
-                            <a href="crear_texto.php">Subir texto</a>
-                </div> -->
-                <label for="">NOTA 21/06/2021</label><br>
-                <a href="">Revisar subida de publicidad sin algun archivo dentro del input tipo file</a>
-                <h4 class="display-4 text-center"> Subir nueva publicidad</h4> <hr><br>
-                
-                <?php if(isset($_GET['error'])){?>
+var_dump($archivo_tamano);
+//Si no hay algun archivo cargado da error de int(0);
+//Si no hay algun archivo el tipo sera String(0);
 
-                <div class="alert alert-danger" role="alert" align="center">
-                    <?php echo $_GET['error']; ?>
-                </div>
-                <?php }?>
+$datos_publicidad= 'titulo='.$titulo.'&texto='.$texto.'&fhi='.$fecha_hora_inicio.'&fhf='.$fecha_hora_final.'&fks='.$fk_sucursal.'&fkd'.$fk_dispositivo;
 
-                <?php if(isset($_GET['success'])){?>
-                    <div class="alert alert-success" role="alert">
-                        <?php echo $_GET['success']; ?>
-                    </div>
-                <?php }?> 
-                <label for="">Selecciona una opcion</label>
-                <button class="btn btn-danger" id="botonAccion">Solo texto</button>
-                <script>
-                        $(function(){
-                            let miParrafo = $('#noMedia');
-                            var estaOculto=false;
+if(empty($titulo)){
+    header("Location: ../cargar_publicidad.php?error=Titulo es requerido&$datos_publicidad");
+}else if($fecha_hora_inicio > $fecha_hora_final){
+    header("Location: ../cargar_publicidad.php?error=Fecha hora final menor a la inicial, ingresa una fecha valida nuevamente.&$datos_publicidad");
+}else if($fecha_hora_inicio == $fecha_hora_final){
+    header("Location: ../cargar_publicidad.php?error=Las fechas son identicas, por favor verifica las fechas.&$datos_publicidad");
+}else if(empty($fecha_hora_inicio)){
+    header("Location: ../cargar_publicidad.php?error=Fecha Hora Inicial es requerida&$datos_publicidad");
+}else if(empty($fecha_hora_final)){
+    header("Location: ../cargar_publicidad.php?error=Fecha Hora Final es requerido&$datos_publicidad");
+}else if(empty($fk_sucursal)){
+    header("Location: ../cargar_publicidad.php?error=Sucursal es requerida&$datos_publicidad");
+}else if (empty($fk_dispositivo)){
+    header("Location: ../cargar_publicidad.php?error=Dispositivo es requerido&$datos_publicidad");
+}else if ($_FILES['archivo']['name'] !=null){//ESTA LINEA IDENTIFICA QUE EL FILE TENGA NOMBRE OSEA QUE NO ESTE VACIO Y TAMBIEN QUE CONTENGA TEXTO
 
-                            $('#botonAccion').click(function(){
-                                if(estaOculto){
-                                    $("#noMedia").show();
-                                    
-                                    // estaOculto = false;
-                                }else{
-                                    $("#noMedia").hide();
+    echo "Hay archivo prro";
+    if($tipo=='image/jpg' || $tipo=='image/png' || $tipo=='image/jpeg' || $tipo=='image/gif'){
+    echo "Es una imagen prro";
+    $archivo = $_FILES["archivo"]["name"];
+    $ruta = $_FILES['archivo']['tmp_name'];
+    $destino = "multimedia/".$archivo;
+    copy($ruta,$destino);
+    $extension_archivo = str_replace("image/","",$tipo);
+    $tipo_archivo= "imagen";
 
-                                    // estaOculto = true;
-                                }
-                                estaOculto = !estaOculto;
-                            });
-                        });
-                    </script>
-                
+    $sql = $sql = "INSERT INTO publicidad(titulo_publicidad,url_archivo,extension_archivo,tipo_archivo,fecha_hora_inicio,fecha_hora_final,estatus,texto, fk_sucursal,fk_dispositivo)
+        VALUES('$titulo','$destino','$extension_archivo','$tipo_archivo','$fecha_hora_inicio','$fecha_hora_final',1,'$texto','$fk_sucursal','$fk_dispositivo')";
 
-                <div class="form-group">
-                   <label for="titulo" class="display-6 text-center"> Título de la publicidad</label>
-                    <br><br><input type="text" class="form-control" id="titulo" name="titulo_publicidad" value="<?php if(isset($_GET['titulo']))
-                                echo($_GET['titulo']); ?>">
-                    <br>
-                </div>
-        
-                <div class="form-group">
-                    <label for="texto_descripcion" name="texto" class="display-6 text text-center" id="sTexto">Texto</label><br><br>
-                    
-                    <textarea name="texto" id="" cols="30" rows="10" class="form-control"></textarea>
-                    <br>
-                 </div>
-                
-                 <div class="form-group">
-                    <label for="fhl" name="fecha_hora_inicio" class="text-center display-6">Fecha y Hora de Inicio</label><br>
-                    <br><input type="datetime-local" size="5" class="form-control" required name="fecha_hora_inicio" value=""><br><br>
-                </div>
+    $resultado = mysqli_query($mysqli,$sql);
+    
+            if($resultado > 0){
+                header("Location: ../cargar_publicidad.php?success=Guardado exitosamente!!");
+            }else{
+                header("Location: ../cargar_publicidad.php?error=Ocurrio un error&$datos_publicidad");
+            }
 
-                <div class="form-group">
-                    <label for="" class="display-6 text-center">Fecha y hora de término</label><br>
-                    <br><input type="datetime-local" name="fecha_hora_final" class="form-control" required> <br>
-                    <hr>
-                </div>
+    }else if($tipo=='video/mp4' || $tipo=='video/avi' || $tipo=='video/flv' || $tipo=='video/mov' || $tipo=='video/wmv'|| $tipo=='video/H.264' || $tipo=='video/XVID'|| $tipo=='video/RM'){
+        echo "Hay un video prro!!";
+        $archivo = $_FILES["archivo"]["name"];
+        $ruta = $_FILES["archivo"]["tmp_name"];
+        $destino= "multimedia/".$archivo;
+        copy($ruta,$destino);
+        $extension_archivo = str_replace("video/","",$tipo);
+        $tipo_archivo = "video";
 
-                <div class="form-group">
-                    <label for="" class="display-6 text-center">Selecciona una sucursal</label><br>
-                    <select name="fk_sucursal" id="" class="form-control">
-                            <option value="">----Seleccione una sucursal----</option>
-                                 <?php
-                                $query = $mysqli -> query("SELECT * FROM sucursal");
-                                while ($valores = mysqli_fetch_array($query)) {
-                                    echo '<option value="'.$valores['id_sucursal'].'" name="fk_sucursal">'.$valores['nombre_sucursal'].' ('.$valores['tipo_sucursal'].')'.'</option>';
-                                }
-                                ?>
-                    </select>
-                                <hr>
+        $sql = $sql = "INSERT INTO publicidad(titulo_publicidad,url_archivo,extension_archivo,tipo_archivo,fecha_hora_inicio,fecha_hora_final,estatus,texto, fk_sucursal,fk_dispositivo)
+        VALUES('$titulo','$destino','$extension_archivo','$tipo_archivo','$fecha_hora_inicio','$fecha_hora_final',1,'$texto','$fk_sucursal','$fk_dispositivo')";
 
-                    <label for="" class="display-6 text-center">Dispositivos disponibles</label><br>
-                    <select name="fk_dispositivo" id="" class="form-control">
-                            <option value="">----Seleccione un dispositivo----</option>
-                            <?php
-                                $query = $mysqli -> query("SELECT * FROM dispositivo");
-                                while ($valores = mysqli_fetch_array($query)) {
-                                    echo '<option value="'.$valores['id_dispositivo'].'" name="fk_dispositivo">'.$valores['tipo_dispositivo'].' ('.$valores['nombre_dispositivo'].')'.'</option>';
-                                }
-                                ?>
-                    </select>
-                    <hr>
-                </div>
-                
-                <div class="form-group" id="noMedia">
-                    <label for="" class="display-6 text-center">Audio/Imagen/Video</label><br>
-                    
-                    </h6><br>
-                    <input type="file"  class="form-control" name="archivo" id="archivo" accept="audio/*,video/*,image/*"><br>
-                    <hr>
-                </div>
-                    <br>
-                
-                <button type="submit" class="btn btn-primary"
-                name="crear" text-center>Crear nueva publicidad</button>
-            </form>
-            
-        </div>
-</body>
+        $resultado = mysqli_query($mysqli,$sql);
 
+        if($resultado >0){
+            header("Location: ../cargar_publicidad.php?success=Guardado exitosamente!!");
+        }else{
+            header("Location: ../cargar_publicidad.php?error=Ocurrio un error&$datos_publicidad");
+        }
+    }else if($tipo=='audio/mpeg' || $tipo=='audio/mp3' || $tipo=='audio/wav' || $tipo=='audio/midi' || $tipo=='audio/aac' || $tipo=='audio/flac' || $tipo=='audio/AIFF'){
+        echo "Hay un audio prro!!";
+        $archivo = $_FILES["archivo"]["name"];
+        $ruta = $_FILES["archivo"]["tmp_name"];
+        $destino = "multimedia/".$archivo;
+        copy($ruta,$destino);
+        $extension_archivo = str_replace("audio/","",$tipo);
+        $tipo_archivo = "audio";
 
-</html>
+        $sql = $sql = "INSERT INTO publicidad(titulo_publicidad,url_archivo,extension_archivo,tipo_archivo,fecha_hora_inicio,fecha_hora_final,estatus,texto, fk_sucursal,fk_dispositivo)
+        VALUES('$titulo','$destino','$extension_archivo','$tipo_archivo','$fecha_hora_inicio','$fecha_hora_final',1,'$texto','$fk_sucursal','$fk_dispositivo')";
+
+        $resultado = mysqli_query($mysqli, $sql);
+
+        if($resultado > 0){
+            header("Location: ../cargar_publicidad.php?success=Guardado exitosamente!!");
+        }else{
+            header("Location: ../cargar_publicidad.php?error=Ocurrio un error&$datos_publicidad");
+        }
+    }else{
+        header("Location: ../cargar_publicidad.php?error=Formato no valido");
+    }
+}else{
+    echo "Es un texto";
+    $tipo_archivo = "texto";
+    $extension_archivo= "txt";
+
+    $sql = $sql = "INSERT INTO publicidad(titulo_publicidad,url_archivo,extension_archivo,tipo_archivo,fecha_hora_inicio,fecha_hora_final,estatus,texto, fk_sucursal,fk_dispositivo)
+    VALUES('$titulo','','$extension_archivo','$tipo_archivo','$fecha_hora_inicio','$fecha_hora_final',1,'$texto','$fk_sucursal','$fk_dispositivo')";
+    $resultado = mysqli_query($mysqli,$sql);
+
+    if($resultado > 0){
+        header("Location: ../cargar_publicidad.php?success=Se ha guardado el texto exitosamente!!");
+    }else{
+        header("Location: ../publicy_0.php?error=Ocurrio un Error&$datos_subida");
+    }
+}
